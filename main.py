@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 
+# Keeps track of the different available decay functions
 class DecayFunctions:
 
     def __init__(self):
@@ -17,11 +18,13 @@ class DecayFunctions:
     def __getitem__(self, item):
         return getattr(self,item)
 
+
+# Handles graph creation. Currently only for TSP
 class GraphMaker:
 
     def __init__(self,output_dir):
         self.output_dir = output_dir
-        self.plot_no = len(next(os.walk(self.output_dir))[2])
+        self.plot_no = len(os.listdir(output_dir))
 
     def show_plot(self,cities_x,cities_y,som_x,som_y):
         plt.scatter(cities_x,cities_y)
@@ -40,19 +43,15 @@ class GraphMaker:
         return
 
 
+# Man class that represents the self organising map
 class SOM:
 
+    # Sets a directory to use for outputting files
     def get_output_dir(self):
-        dirf = open("output/vars.txt", "rw")
-        dir = dirf.readline()
-        dirno = int(dir)
+        dirno = len(os.listdir("output/"))
+        os.makedirs("output/"+str(dirno),exist_ok=False)
+        return "output/"+str(dirno)
 
-        import os.makedirs
-        os.makedirs(str(dirno))
-
-        dir.replace(str(dirno), str(dirno + 1))
-        dirf.close()
-        return str(dirno)
 
     def __init__(self,
                 lr,
@@ -62,57 +61,68 @@ class SOM:
                 decay_func,
                 caseman,
                 weight_init_range=None,
-                draw_interval = 10
+                draw_interval = 10,
+                graph_int = 10
                 ):
         self.lr = lr
         self.decay_rate = decay_rate
-        self.decay_func = DecayFunctions[decay_func]
+        self.decay_func = DecayFunctions()[decay_func]
         self.input_size = input_size
         self.output_size = output_size
         self.weights_init_range = weight_init_range
         self.draw_interval = draw_interval
         self.cman = caseman
         self.output_dir = self.get_output_dir()
-        self.grap_maker = GraphMaker(self.output_dir)
+        self.graph_maker = GraphMaker(self.output_dir)
+        self.n_factor = 5 # Defines neighbourhood size. This equals approx 3 neighbours on each side
+        self.graph_int = graph_int # Defines how often graphs are to be saved
 
         self.inlayer = np.ndarray(input_size)
         self.outlayer = np.ndarray(output_size)
-        self.weights = np.random.rand(input_size, output_size)
+        self.weights = np.random.rand(output_size,input_size)
         self.updated_lr = self.lr
 
-        # Returs the neighbours of the node
-        def neighbours(node):
-            neighbours = []
-            return neighbours, distance
+    # Returns the neighbours of the node
+    def neighbours(self, node_index,cutoff_lim=0.05):
+        neighbours = []
+        i = 1
+        while True:
+            distance_factor = np.exp((-i**2)/(self.n_factor**2))
+            if distance_factor <= cutoff_lim: break
+            neighbours.append((node_index+1, distance_factor))
+            neighbours.append((node_index-1, distance_factor))
 
-        # Adjusts the weights of the input node, depending on the learning rate and distance from winning node.
-        def adjust(input, node, distance):
-            diff = input-node
-            node = node + diff*distance*self.updated_lr
 
-        # trains the neural network on one input event
-        def train(input):
-            result = input*self.weights
-            winner = result.amax()
+        return neighbours
 
-            # Adjusts weights of winner node itself
-            adjust(input,winner,1)
+    # Adjusts the weights of the input node, depending on the learning rate and distance from winning node.
+    def adjust(self, input, node_index, distance):
+        diff = input-self.weights[node_index]
+        self.weights[node_index] = self.weights[node_index] + diff*distance*self.updated_lr
 
-            # adjust weights of neighbours
-            for (node,distance) in neighbours(winner):
-                adjust(input,node,distance)
+    # Trains the neural network on one input event
+    def train(self, input):
+        result = np.matmul(self.weights,input)
+        winner = result.argmax()
 
-        # Executes a training session with <iteration> cases
-        def run(iterations):
-            for i in range(iterations):
-                # Run one training iteration
-                input = self.cman.next()
-                train(input)
+        # Adjusts weights of winner node itself
+        self.adjust(input,winner,1)
 
-                # Updates learning rate before next iteration
-                self.updated_lr = self.lr*self.decay_func()
+        # adjust weights of neighbours
+        for (node,distance) in self.neighbours(winner):
+            self.adjust(input,node,distance)
 
-                # Generate charts
-                if i == self.graph_int:
-                    self.graph_maker.save_graph(self.cman.get_all_cases(),self.weights)
+    # Executes a training session with <iteration> cases
+    def run(self, iterations):
+        for i in range(iterations):
+            # Run one training iteration
+            input = self.cman.next()
+            self.train(input)
+
+            # Updates learning rate before next iteration
+            self.updated_lr = self.lr*self.decay_func()
+
+            # Generate charts
+            if i == self.graph_int:
+                self.graph_maker.save_graph(self.cman.get_all_cases(),self.weights)
 
