@@ -67,8 +67,8 @@ class SOM:
         x_min,x_max,y_min,y_max = self.cman.minmax()
         x_cen,y_cen = self.cman.center()
         nodes = self.output_size
-        x_val = (x_max-x_min)/3
-        y_val = (y_max-y_min)/3
+        x_val = (x_max-x_min)/6
+        y_val = (y_max-y_min)/6
         weights = []
         for x in range(nodes):
             x_ser = np.cos(x/nodes*2*np.pi)*x_val+x_cen
@@ -83,12 +83,24 @@ class SOM:
         weights[:, 1] = weights[:, 1] +y_cen
         return weights
 
+    def active_nodes(self):
+        cities = self.cman.get_all_cases()
+        active = np.full(self.output_size,0)
+        for city in cities:
+            results = np.square(self.weights - city)
+            summarized = results.sum(1)
+            winner_index = summarized.argmin()
+            active[winner_index] = 1
+        return active
+
     def path_length(self):
         total_length = 0.
-
+        active_nodes = self.active_nodes()
+        for i in range(len(active_nodes)-1,-1,-1):
+            if not active_nodes[i]: self.weights = np.delete(self.weights,i,0)
         for i in range(1,len(self.weights)):
-            x = np.abs(self.weights[i-1][0]-self.weights[i-1][0])
-            y = np.abs(self.weights[i - 1][1] - self.weights[i - 1][1])
+            x = np.abs(self.weights[i-1][0]-self.weights[i][0])
+            y = np.abs(self.weights[i - 1][1] - self.weights[i][1])
             dist = np.sqrt(x**2+y**2)
             total_length += dist
         return total_length
@@ -178,10 +190,18 @@ class SOM:
                 print("Currently on step: " + str(i))
 
         # Makes a video of all the image files
+        # if self.video:
+        #     cwd = os.getcwd()
+        #     outputdir = os.path.join(cwd, self.output_dir)
+        #     subprocess.call("cd "+outputdir)
         if self.video:
             cwd = os.getcwd()
             outputdir = os.path.join(cwd, self.output_dir)
             os.chdir(outputdir)
-            os.system("ffmpeg -r 30 -f image2 -s 640x480 -i plot%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p _video.mp4")
+            os.system("ffmpeg -r 30 -f image2 -s 640x480 -i plot%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p _video.mp4 > /dev/null")
+
+        print("Path length= "+str(self.path_length()))
+
+        self.graph_maker.save_plot(self.cman.x, self.cman.y, self.weights[:, 0], self.weights[:, 1])
 
 

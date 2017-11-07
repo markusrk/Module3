@@ -2,7 +2,7 @@ import main as m
 from casemanager import CaseManager
 import subprocess
 
-cm = CaseManager("1")
+cm = CaseManager("3")
 
 param = {"lr": 0.5,
             "input_size": 2,
@@ -18,6 +18,7 @@ param = {"lr": 0.5,
 
 som = m.SOM(**param)
 som.run(4000)
+
 
 
 #decay = m.DecayFunctions()
