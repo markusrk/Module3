@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import subprocess
+import pickle
+from copy import deepcopy
 
 # Keeps track of the different available decay functions
 class DecayFunctions:
@@ -49,9 +51,13 @@ class GraphMaker:
 class SOM:
 
     # Sets a directory to use for outputting files
-    def get_output_dir(self):
-        dirno = len(os.listdir("output/"))
-        os.makedirs("output/"+str(dirno),exist_ok=False)
+    def get_output_dir(self,output_dir=None):
+        if output_dir:
+            os.makedirs("output/" + output_dir, exist_ok=True)
+            return  "output/"+output_dir
+        else:
+            dirno = len(os.listdir("output/"))
+            os.makedirs("output/"+str(dirno),exist_ok=False)
         return "output/"+str(dirno)
 
     def matrix_init(self):
@@ -93,16 +99,19 @@ class SOM:
             active[winner_index] = 1
         return active
 
-    def path_length(self):
+    def path_length(self, return_nodes=False):
         total_length = 0.
         active_nodes = self.active_nodes()
+        weights = deepcopy(self.weights)
         for i in range(len(active_nodes)-1,-1,-1):
-            if not active_nodes[i]: self.weights = np.delete(self.weights,i,0)
-        for i in range(1,len(self.weights)):
-            x = np.abs(self.weights[i-1][0]-self.weights[i][0])
-            y = np.abs(self.weights[i - 1][1] - self.weights[i][1])
+            if not active_nodes[i]: weights = np.delete(weights,i,0)
+        for i in range(1,len(weights)):
+            x = np.abs(weights[i-1][0]-weights[i][0])
+            y = np.abs(weights[i - 1][1] - weights[i][1])
             dist = np.sqrt(x**2+y**2)
             total_length += dist
+        if return_nodes:
+            return total_length,weights
         return total_length
 
     def __init__(self,
@@ -118,6 +127,8 @@ class SOM:
                  video = False,
                  weight_init_range=None,
                  draw_interval = 10,
+                 output_dir = None,
+                 save = True
 
                  ):
         self.lr = lr
@@ -127,7 +138,7 @@ class SOM:
         self.weights_init_range = weight_init_range
         self.draw_interval = draw_interval
         self.cman = caseman
-        self.output_dir = self.get_output_dir()
+        self.output_dir = self.get_output_dir(output_dir)
         self.graph_maker = GraphMaker(self.output_dir)
         self.n_factor = n_factor # Defines neighbourhood size. This equals approx 3 neighbours on each side
         self.updated_n_factor = self.n_factor
@@ -139,6 +150,7 @@ class SOM:
         self.outlayer = np.ndarray(output_size)
         self.weights = self.circle_init()
         self.updated_lr = self.lr
+        self.save = save
 
     # Returns the neighbours of the node
     def neighbours(self, node_index,cutoff_lim=0.05):
@@ -189,19 +201,28 @@ class SOM:
             if i%100 == 0:
                 print("Currently on step: " + str(i))
 
+
+        # Finishing comments
+        pl,used_nodes = self.path_length(return_nodes=True)
+        print("Path length= " + str(pl))
+        self.graph_maker.save_plot(self.cman.x, self.cman.y, used_nodes[:, 0], used_nodes[:, 1])
+
         # Makes a video of all the image files
-        # if self.video:
-        #     cwd = os.getcwd()
-        #     outputdir = os.path.join(cwd, self.output_dir)
-        #     subprocess.call("cd "+outputdir)
         if self.video:
             cwd = os.getcwd()
             outputdir = os.path.join(cwd, self.output_dir)
             os.chdir(outputdir)
             os.system("ffmpeg -r 30 -f image2 -s 640x480 -i plot%d.png -vcodec libx264 -crf 25  -pix_fmt yuv420p _video.mp4 > /dev/null")
+            os.chdir(cwd)
 
-        print("Path length= "+str(self.path_length()))
+        # Saves the SOM to a file
+        if self.save:
+            cwd = os.getcwd()
+            outputdir = os.path.join(cwd, self.output_dir)
+            os.chdir(outputdir)
+            with open("SOM.pkl", "wb") as f:
+                pickle.dump(self, f)
+            os.chdir(cwd)
 
-        self.graph_maker.save_plot(self.cman.x, self.cman.y, self.weights[:, 0], self.weights[:, 1])
 
 

@@ -27,7 +27,7 @@ class CaseManager:
                 self.cities = []
                 for line in f:
                     if "EOF" in line: break
-                    _,x,y = line.split(" ")
+                    _,x,y = line.strip().split(" ")
                     x,y = float(x),float(y)
                     self.cities.append((x,y))
             # Generate separat x,y coordinates, only used by graph_maker
