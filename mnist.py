@@ -53,7 +53,7 @@ class SOM:
     # Sets a directory to use for outputting files
     def get_output_dir(self,output_dir=None):
         if output_dir:
-            os.makedirs("output/" + output_dir, exist_ok=False)
+            os.makedirs("output/" + output_dir, exist_ok=True)
             return  "output/"+output_dir
         else:
             dirno = len(os.listdir("output/"))
@@ -223,8 +223,6 @@ class SOM:
             with open("SOM.pkl", "wb") as f:
                 pickle.dump(self, f)
             os.chdir(cwd)
-
-        return self.path_length(),self.output_dir
 
 
 

@@ -1,6 +1,7 @@
 import main as m
 from casemanager import CaseManager
 import pickle
+import pandas as pd
 cm = CaseManager("4")
 
 param = {"lr": 0.5,
@@ -17,25 +18,35 @@ param = {"lr": 0.5,
 }
 
 
-def test_all(iterations_per_problem):
-    for i in range(1,10):
+def test_all(iterations_per_problem,out_dir=None):
+    path_lengths = []
+    output_dirs = []
+    problem_no = []
+    results = pd.DataFrame()
+    #results = pd.read_csv("results.csv")
+    for i in range(9,10):
         print("Starting on problem number "+str(i))
         cm = CaseManager(str(i))
-        out_dir = "first_real_test" + str(i)
+        if out_dir: out_dir = out_dir + str(i)
         param = {"lr": 0.5,
                  "input_size": 2,
                  "output_size": 200,
                  "decay_func": "exp",
                  "caseman": cm,
                  "decay_half_life": 1000,
-                 "n_factor": 3,
+                 "n_factor": 5,
                  "n_halftime": 500,
                  "graph_int": 10,
                  "video": True,
                  "output_dir": out_dir
                  }
         som = m.SOM(**param)
-        som.run(iterations_per_problem)
+        path_length,output_dir = som.run(iterations_per_problem)
+        param["path_length"] = path_length
+        param["output_dir"] = output_dir
+        param["problem_no"] = i
+        results = results.append(param,ignore_index=True)
+    results.to_csv("results.csv")
 
 
 def test_load_function():
@@ -47,7 +58,10 @@ def test_load_function():
         som.run(100)
 
 
-test_all(4000)
+test_all(100,out_dir="csv_test2")
+
+
+#test_all(4000)
 #test_load_function()
 #decay = m.DecayFunctions()
 #print(decay["exp"](0.1))
