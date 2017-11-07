@@ -4,6 +4,7 @@ import os
 import subprocess
 import pickle
 from copy import deepcopy
+import pandas as pd
 
 # Keeps track of the different available decay functions
 class DecayFunctions:
@@ -47,7 +48,7 @@ class GraphMaker:
         return
 
 
-# Man class that represents the self organising map
+# Main class that represents the self organising map
 class SOM:
 
     # Sets a directory to use for outputting files
@@ -60,6 +61,7 @@ class SOM:
             os.makedirs("output/"+str(dirno),exist_ok=False)
         return "output/"+str(dirno)
 
+    # Todo initializes nodes spread randomly around the same area as the cities
     def matrix_init(self):
         x_min,x_max,y_min,y_max = self.cman.minmax()
      #   x_col = np.full(self.output_size,x_max-x_min)
@@ -89,6 +91,7 @@ class SOM:
         weights[:, 1] = weights[:, 1] +y_cen
         return weights
 
+    # Returns a list representing which nodes are actually on top of a city and which that are not
     def active_nodes(self):
         cities = self.cman.get_all_cases()
         active = np.full(self.output_size,0)
@@ -99,6 +102,7 @@ class SOM:
             active[winner_index] = 1
         return active
 
+    # Calculates the pathlength of the current SOM position, after removing nodes not assigned to any city
     def path_length(self, return_nodes=False):
         total_length = 0.
         active_nodes = self.active_nodes()
@@ -125,8 +129,6 @@ class SOM:
                  n_halftime,
                  graph_int,
                  video = False,
-                 weight_init_range=None,
-                 draw_interval = 10,
                  output_dir = None,
                  save = True
 
@@ -135,8 +137,6 @@ class SOM:
         self.decay_half_life = DecayFunctions(decay_half_life)[decay_func]
         self.input_size = input_size
         self.output_size = output_size
-        self.weights_init_range = weight_init_range
-        self.draw_interval = draw_interval
         self.cman = caseman
         self.output_dir = self.get_output_dir(output_dir)
         self.graph_maker = GraphMaker(self.output_dir)
@@ -146,8 +146,6 @@ class SOM:
         self.n_halftime = n_halftime
         self.video = video
 
-        self.inlayer = np.ndarray(input_size)
-        self.outlayer = np.ndarray(output_size)
         self.weights = self.circle_init()
         self.updated_lr = self.lr
         self.save = save
@@ -223,8 +221,15 @@ class SOM:
             with open("SOM.pkl", "wb") as f:
                 pickle.dump(self, f)
             os.chdir(cwd)
+            df = pd.DataFrame()
+            #df = pd.read_csv("running_res.csv")
+            params = deepcopy(vars(self))
+            params["path_length"] = self.path_length()
+            params["iterations"] = iterations
+            df = df.append(params, ignore_index=True)
+            df.to_csv("running_res.csv")
 
-        return self.path_length(),self.output_dir
+        return self.path_length(), self.output_dir
 
 
 

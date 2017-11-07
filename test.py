@@ -10,13 +10,15 @@ param = {"lr": 0.5,
             "decay_func": "exp",
             "caseman": cm,
             "decay_half_life": 1000,
-            "n_factor": 3,
+            "n_factor": 5,
             "n_halftime": 500,
             "graph_int": 10,
             "video": True,
             "output_dir": None
 }
 
+som = m.SOM(**param)
+som.run(100)
 
 def test_all(iterations_per_problem,out_dir=None):
     path_lengths = []
@@ -58,7 +60,8 @@ def test_load_function():
         som.run(100)
 
 
-test_all(100,out_dir="csv_test2")
+#test_all(100,out_dir="csv_test2")
+
 
 
 #test_all(4000)
