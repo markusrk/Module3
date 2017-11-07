@@ -1,19 +1,25 @@
 import main as m
 from casemanager import CaseManager
+import subprocess
 
-cm = CaseManager("8")
+cm = CaseManager("1")
 
-param = {"lr": 0.1,
-            "decay_rate": 0.1,
+param = {"lr": 0.5,
             "input_size": 2,
-            "output_size": 100,
+            "output_size": 200,
             "decay_func": "exp",
-            "caseman": cm
+            "caseman": cm,
+            "decay_half_life": 1000,
+            "n_factor": 3,
+            "n_halftime": 500,
+            "graph_int": 10,
+            "video": True
 }
 
 som = m.SOM(**param)
-som.run(100)
-print(som.weights)
+som.run(4000)
+
+
 #decay = m.DecayFunctions()
 #print(decay["exp"](0.1))
 
