@@ -8,7 +8,7 @@ cm = CaseManager("mnist")
 
 param = {"lr": 0.5,
             "input_size": 784,
-            "output_size": 200,
+            "output_size": 196,
             "decay_func": "exp",
             "caseman": cm,
             "decay_half_life": 1000,
@@ -17,7 +17,7 @@ param = {"lr": 0.5,
             "graph_int": 10,
             "video": False,
             "output_dir": None,
-            "nodes_per_row": 3
+            "nodes_per_row": 14
 }
 
 som = m.SOM(**param)

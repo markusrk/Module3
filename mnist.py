@@ -48,12 +48,13 @@ class GraphMaker:
         return
 
     def show_2d_plot(self,matrix):
-        plt.matshow(matrix)
+        plt.matshow(matrix,cmap='Accent')
         plt.show()
         return
 
     def save_2d_plot(self,matrix):
-        plt.matshow(matrix)
+        plt.matshow(matrix,cmap='tab20')
+        plt.colorbar()
         plt.savefig(self.output_dir + "/plot" + str(self.plot_no))
         plt.close()
         self.plot_no += 1
@@ -191,13 +192,17 @@ class SOM:
         return winner
 
     def most_common(self,lst):
-        return max(set(lst), key=lst.count)
+        try:
+            return max(set(lst), key=lst.count)
+        except ValueError:
+            return -1
 
     def node_classes(self):
         node_classes = []
-        winner_lists = [[]]*self.output_size
-        for i in range(self.classification_batch_size):
-            f,l = self.cman.next()
+        winner_lists = [[] for i in range(self.output_size)]
+        features, labels = self.cman.get_all_cases()
+        for i in range(len(features)):
+            f,l = features[i],labels[i]
             results = np.square(self.weights - f)
             summarized = results.sum(1)
             winner = summarized.argmin()
