@@ -1,11 +1,13 @@
-import main as m
+import mnist as m
 from casemanager import CaseManager
+import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("4")
+cm = CaseManager("mnist")
+
 
 param = {"lr": 0.5,
-            "input_size": 2,
+            "input_size": 784,
             "output_size": 200,
             "decay_func": "exp",
             "caseman": cm,
@@ -13,12 +15,16 @@ param = {"lr": 0.5,
             "n_factor": 5,
             "n_halftime": 500,
             "graph_int": 10,
-            "video": True,
-            "output_dir": None
+            "video": False,
+            "output_dir": None,
+            "nodes_per_row": 3
 }
 
 som = m.SOM(**param)
 som.run(100)
+
+
+
 
 def test_all(iterations_per_problem,out_dir=None):
     path_lengths = []

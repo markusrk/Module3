@@ -1,9 +1,11 @@
-import numpy as np
-import matplotlib.pyplot as plt
 import os
-import subprocess
 import pickle
 from copy import deepcopy
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 
 # Keeps track of the different available decay functions
 class DecayFunctions:
@@ -43,44 +45,39 @@ class GraphMaker:
         plt.savefig(self.output_dir+"/plot"+str(self.plot_no))
         plt.close()
         self.plot_no += 1
-
         return
 
+    def show_2d_plot(self,matrix):
+        plt.matshow(matrix)
+        plt.show()
+        return
 
-# Man class that represents the self organising map
+    def save_2d_plot(self,matrix):
+        plt.matshow(matrix)
+        plt.savefig(self.output_dir + "/plot" + str(self.plot_no))
+        plt.close()
+        self.plot_no += 1
+        return
+
+# Main class that represents the self organising map
 class SOM:
 
     # Sets a directory to use for outputting files
     def get_output_dir(self,output_dir=None):
         if output_dir:
-            os.makedirs("output/" + output_dir, exist_ok=True)
+            os.makedirs("output/" + output_dir, exist_ok=False)
             return  "output/"+output_dir
         else:
             dirno = len(os.listdir("output/"))
             os.makedirs("output/"+str(dirno),exist_ok=False)
         return "output/"+str(dirno)
 
-    def matrix_init(self):
-        x_min,x_max,y_min,y_max = self.cman.minmax()
-     #   x_col = np.full(self.output_size,x_max-x_min)
-     #   y_col = np.full(self.output_size, y_max - y_min)
+
+    def rand_init(self):
         weights = np.random.random_sample((self.output_size,self.input_size))
-        weights[:,0] = weights[:,0]*(x_max-x_min)+x_min
-        weights[:, 1] = weights[:, 1] * (y_max - y_min) + y_min
+        weights = weights*0.2-0.1
         return weights
 
-    def circle_init(self):
-        x_min,x_max,y_min,y_max = self.cman.minmax()
-        x_cen,y_cen = self.cman.center()
-        nodes = self.output_size
-        x_val = (x_max-x_min)/6
-        y_val = (y_max-y_min)/6
-        weights = []
-        for x in range(nodes):
-            x_ser = np.cos(x/nodes*2*np.pi)*x_val+x_cen
-            y_ser = np.sin(x / nodes * 2 * np.pi) * y_val + y_cen
-            weights.append([x_ser,y_ser])
-        return np.array(weights)
 
     def center_init(self):
         x_cen,y_cen = self.cman.center()
@@ -89,6 +86,7 @@ class SOM:
         weights[:, 1] = weights[:, 1] +y_cen
         return weights
 
+    # Returns a list representing which nodes are actually on top of a city and which that are not
     def active_nodes(self):
         cities = self.cman.get_all_cases()
         active = np.full(self.output_size,0)
@@ -99,6 +97,7 @@ class SOM:
             active[winner_index] = 1
         return active
 
+    # Calculates the pathlength of the current SOM position, after removing nodes not assigned to any city
     def path_length(self, return_nodes=False):
         total_length = 0.
         active_nodes = self.active_nodes()
@@ -125,18 +124,15 @@ class SOM:
                  n_halftime,
                  graph_int,
                  video = False,
-                 weight_init_range=None,
-                 draw_interval = 10,
                  output_dir = None,
-                 save = True
+                 save = True,
+                 nodes_per_row = None
 
                  ):
         self.lr = lr
         self.decay_half_life = DecayFunctions(decay_half_life)[decay_func]
         self.input_size = input_size
         self.output_size = output_size
-        self.weights_init_range = weight_init_range
-        self.draw_interval = draw_interval
         self.cman = caseman
         self.output_dir = self.get_output_dir(output_dir)
         self.graph_maker = GraphMaker(self.output_dir)
@@ -145,10 +141,12 @@ class SOM:
         self.graph_int = graph_int # Defines how often graphs are to be saved
         self.n_halftime = n_halftime
         self.video = video
+        self.nodes_per_row = nodes_per_row
+        if not self.nodes_per_row:
+            self.nodes_per_row = self.output_size
+        self.classification_batch_size = 1000
 
-        self.inlayer = np.ndarray(input_size)
-        self.outlayer = np.ndarray(output_size)
-        self.weights = self.circle_init()
+        self.weights = self.rand_init()
         self.updated_lr = self.lr
         self.save = save
 
@@ -159,9 +157,11 @@ class SOM:
         while True:
             distance_factor = np.exp((-i**2/(self.updated_n_factor**2)))
             if distance_factor <= cutoff_lim: break
-            if i + node_index >= len(self.weights): break
-            neighbours.append((node_index+i, distance_factor))
-            neighbours.append((node_index-i, distance_factor))
+            neighbours.append(((node_index-i)%len(self.weights), distance_factor))
+            neighbours.append(((node_index+i)%len(self.weights), distance_factor))
+            if not self.nodes_per_row == self.output_size:
+                neighbours.append(((node_index - i*self.nodes_per_row) % len(self.weights), distance_factor))
+                neighbours.append(((node_index + i*self.nodes_per_row) % len(self.weights), distance_factor))
             i += 1
         return neighbours
 
@@ -182,13 +182,37 @@ class SOM:
         # adjust weights of neighbours
         for (node,distance) in self.neighbours(winner):
             self.adjust(input,node,distance)
+        return winner
+
+    def winner(self, input):
+        results = np.square(self.weights-input)
+        summarized = results.sum(1)
+        winner = summarized.argmin()
+        return winner
+
+    def most_common(self,lst):
+        return max(set(lst), key=lst.count)
+
+    def node_classes(self):
+        node_classes = []
+        winner_lists = [[]]*self.output_size
+        for i in range(self.classification_batch_size):
+            f,l = self.cman.next()
+            results = np.square(self.weights - f)
+            summarized = results.sum(1)
+            winner = summarized.argmin()
+            winner_lists[winner].append(np.argmax(l))
+        for wins in winner_lists:
+            node_classes.append(self.most_common(wins))
+        return node_classes
+
 
     # Executes a training session with <iteration> cases
     def run(self, iterations):
         for i in range(iterations):
             # Run one training iteration
-            input = self.cman.next()
-            self.train(input)
+            feature,label = self.cman.next()
+            winner = self.train(feature)
 
             # Updates learning rate and neighbourhood rates before next iteration
             self.updated_lr = self.lr*self.decay_half_life(i)
@@ -196,16 +220,21 @@ class SOM:
 
             # Generate charts
             if i%self.graph_int == 0:
-                self.graph_maker.save_plot(self.cman.x,self.cman.y,self.weights[:,0],self.weights[:,1])
-
-            if i%100 == 0:
+                if self.nodes_per_row == self.output_size:
+                    self.graph_maker.save_plot(self.cman.x,self.cman.y,self.weights[:,0],self.weights[:,1])
+                else:
+                    node_class = self.node_classes()
+                    matrix = np.reshape(node_class, (-1, self.nodes_per_row))
+                    self.graph_maker.save_2d_plot(matrix)
+            if i%10 == 0:
                 print("Currently on step: " + str(i))
 
 
         # Finishing comments
-        pl,used_nodes = self.path_length(return_nodes=True)
-        print("Path length= " + str(pl))
-        self.graph_maker.save_plot(self.cman.x, self.cman.y, used_nodes[:, 0], used_nodes[:, 1])
+        if self.nodes_per_row == self.output_size:
+            pl,used_nodes = self.path_length(return_nodes=True)
+            print("Path length= " + str(pl))
+            self.graph_maker.save_plot(self.cman.x, self.cman.y, used_nodes[:, 0], used_nodes[:, 1])
 
         # Makes a video of all the image files
         if self.video:
@@ -223,6 +252,22 @@ class SOM:
             with open("SOM.pkl", "wb") as f:
                 pickle.dump(self, f)
             os.chdir(cwd)
+            df = pd.DataFrame()
+            #df = pd.read_csv("running_res.csv")
+            params = deepcopy(vars(self))
+            if self.output_size == self.nodes_per_row:
+                params["path_length"] = self.path_length()
+            # Todo make this
+            else:
+                params["train_accuracy"] = "something"
+                params["test_accuracy"] = "something"
+            params["iterations"] = iterations
+            df = df.append(params, ignore_index=True)
+            df.to_csv("running_res.csv")
+
+        if self.output_size != self.nodes_per_row:
+            return "mnist", self.output_dir
+        return self.path_length(), self.output_dir
 
 
 

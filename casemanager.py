@@ -16,35 +16,43 @@ class MNIST_holder:
 class CaseManager:
     def __init__(self, dataset):
         if dataset == "mnist":
-            # Todo
+            cases = 1000
+            self.mnist = True
+            self.features, self.labels = MNIST_holder(cases=cases).train_full_batch()
+            self.no_of_cities = cases
             return
         else:
+            self.mnist=False
             with open("datasets/"+dataset+".txt","r") as f:
                 _, self.no_of_cities = next(f).split(": ")
                 #cast no_of_cities to int
                 self.no_of_cities = int(self.no_of_cities)
                 next(f)
-                self.cities = []
+                self.features = []
                 for line in f:
                     if "EOF" in line: break
                     _,x,y = line.strip().split(" ")
                     x,y = float(x),float(y)
-                    self.cities.append((x,y))
+                    self.features.append((x, y))
             # Generate separat x,y coordinates, only used by graph_maker
             self.x = []
             self.y = []
-            for city in self.cities:
+            for city in self.features:
                 self.x.append(city[0])
                 self.y.append(city[1])
 
     def next(self):
-        return self.cities[random.randint(0,self.no_of_cities-1)]
+        r = random.randint(0, self.no_of_cities - 1)
+        if self.mnist:
+            return self.features[r],self.labels[r]
+        return self.features[r]
 
     def get_all_cases(self):
-        return self.cities
+        if self.mnist:
+            return self.features,self.labels
+        return self.features
 
     def get_xy_separate(self):
-
         return self.x,self.y
 
     def center(self):
