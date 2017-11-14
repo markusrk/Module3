@@ -199,6 +199,7 @@ class SOM:
 
     def node_classes(self):
         node_classes = []
+        correct = 0
         winner_lists = [[] for i in range(self.output_size)]
         features, labels = self.cman.get_all_cases()
         for i in range(len(features)):
@@ -208,8 +209,23 @@ class SOM:
             winner = summarized.argmin()
             winner_lists[winner].append(np.argmax(l))
         for wins in winner_lists:
-            node_classes.append(self.most_common(wins))
-        return node_classes
+            most_common = self.most_common(wins)
+            node_classes.append(most_common)
+            correct += wins.count(most_common)
+        return node_classes, correct/len(features)
+
+    def test_accuracy(self):
+        correct = 0
+        node_classes = self.node_classes()
+        features, labels = self.cman.get_all_test_cases()
+        for i in range(len(features)):
+            f,l = features[i],labels[i]
+            results = np.square(self.weights - f)
+            summarized = results.sum(1)
+            winner = summarized.argmin()
+            if l == node_classes(winner):
+                correct += 1
+        return correct/len(features)
 
 
     # Executes a training session with <iteration> cases
@@ -228,11 +244,17 @@ class SOM:
                 if self.nodes_per_row == self.output_size:
                     self.graph_maker.save_plot(self.cman.x,self.cman.y,self.weights[:,0],self.weights[:,1])
                 else:
-                    node_class = self.node_classes()
+                    node_class,win_rate = self.node_classes()
                     matrix = np.reshape(node_class, (-1, self.nodes_per_row))
                     self.graph_maker.save_2d_plot(matrix)
+            # Print step number and accuracy
             if i%10 == 0:
                 print("Currently on step: " + str(i))
+                print("win rate: "+ str(win_rate))
+            # Print test set accuracy
+            if i%100 == 0:
+                print('Test accuracy: '+str(self.test_accuracy()))
+
 
 
         # Finishing comments
