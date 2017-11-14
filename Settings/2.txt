@@ -1,0 +1,26 @@
+from casemanager import CaseManager
+
+cm = CaseManager("2")
+
+
+
+
+import main as m
+import importlib
+importlib.reload(m)
+
+param = {"lr": 0.5,
+            "input_size": 2,
+            "output_size": 260,
+            "decay_func": "exp",
+            "caseman": cm,
+            "decay_half_life": 1000,
+            "n_factor": 20,
+            "n_halftime": 500,
+            "graph_int": 1000,
+            "video": False,
+            "output_dir": None,
+}
+for x in range(10):
+    som = m.SOM(**param)
+    print(som.run(4000))
