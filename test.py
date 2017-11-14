@@ -8,15 +8,16 @@ cm = CaseManager("1")
 
 param = {"lr": 0.5,
             "input_size": 2,
-            "output_size": 100,
+            "output_size": 260,
             "decay_func": "exp",
             "caseman": cm,
             "decay_half_life": 1000,
             "n_factor": 20,
-            "n_halftime": 200,
-            "graph_int": 1000,
+            "n_halftime": 500,
+            "graph_int": 10000,
             "video": False,
             "output_dir": None,
+            "print_interval" : 10000
 }
 
 som = m.SOM(**param)
