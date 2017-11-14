@@ -248,11 +248,11 @@ class SOM:
                     matrix = np.reshape(node_class, (-1, self.nodes_per_row))
                     self.graph_maker.save_2d_plot(matrix)
             # Print step number and accuracy
-            if i%10 == 0:
+            if i%1000000 == 0:
                 print("Currently on step: " + str(i))
                 print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
-            if i%100 == 0:
+            if i>1000 and i%10 == 0:
                 test_accuracy = self.test_accuracy()
                 print('Test accuracy: '+str(test_accuracy))
                 if test_accuracy > 0.75 and win_rate > 0.85:
