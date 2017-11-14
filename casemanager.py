@@ -27,9 +27,12 @@ class CaseManager:
         else:
             self.mnist=False
             with open("datasets/"+dataset+".txt","r") as f:
+                next(f)
+                next(f)
                 _, self.no_of_cities = next(f).split(": ")
                 #cast no_of_cities to int
                 self.no_of_cities = int(self.no_of_cities)
+                next(f)
                 next(f)
                 self.train_features = []
                 for line in f:

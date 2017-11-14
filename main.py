@@ -103,20 +103,59 @@ class SOM:
         return active
 
     # Calculates the pathlength of the current SOM position, after removing nodes not assigned to any city
-    def path_length(self, return_nodes=False):
+    def path_length(self,return_nodes=False):
         total_length = 0.
-        active_nodes = self.active_nodes()
         weights = deepcopy(self.weights)
-        for i in range(len(active_nodes)-1,-1,-1):
-            if not active_nodes[i]: weights = np.delete(weights,i,0)
-        for i in range(1,len(weights)):
-            x = np.abs(weights[i-1][0]-weights[i][0])
-            y = np.abs(weights[i - 1][1] - weights[i][1])
-            dist = np.sqrt(x**2+y**2)
-            total_length += dist
+        nodecities = [[] for i in range(weights.shape[0])]
+        cities = self.cman.get_all_cases()
+        for i in range(len(cities)):
+            results = np.square(self.weights - cities[i])
+            summarized = results.sum(1)
+            winner = summarized.argmin()
+            nodecities[winner].append(cities[i])
+        old_city = None
+        first_city = None
+        #loop through cities and add the distance between them
+        for node in nodecities:
+            for city in node:
+                if not old_city:
+                    old_city = city
+                    first_city = city
+                    continue
+                x = np.abs(city[0]-old_city[0])
+                y = np.abs(city[1] - old_city[1])
+                dist = np.sqrt(x**2+y**2)
+                total_length += dist
+                old_city = city
+        # Add distance from first to last city
+        x = np.abs(first_city[0] - old_city[0])
+        y = np.abs(first_city[1] - old_city[1])
+        dist = np.sqrt(x ** 2 + y ** 2)
+        total_length += dist
+        # Return view of which nodes were close to a city
         if return_nodes:
+            active_nodes = self.active_nodes()
+            for i in range(len(active_nodes)-1,-1,-1):
+                if not active_nodes[i]: weights = np.delete(weights,i,0)
             return total_length,weights
         return total_length
+
+    #
+    # # Calculates the pathlength of the current SOM position, after removing nodes not assigned to any city
+    # def path_length(self, return_nodes=False):
+    #     total_length = 0.
+    #     active_nodes = self.active_nodes()
+    #     weights = deepcopy(self.weights)
+    #     for i in range(len(active_nodes)-1,-1,-1):
+    #         if not active_nodes[i]: weights = np.delete(weights,i,0)
+    #     for i in range(1,len(weights)):
+    #         x = np.abs(weights[i-1][0]-weights[i][0])
+    #         y = np.abs(weights[i - 1][1] - weights[i][1])
+    #         dist = np.sqrt(x**2+y**2)
+    #         total_length += dist
+    #     if return_nodes:
+    #         return total_length,weights
+    #     return total_length
 
     def __init__(self,
                  lr,
@@ -157,9 +196,8 @@ class SOM:
         while True:
             distance_factor = np.exp((-i**2/(self.updated_n_factor**2)))
             if distance_factor <= cutoff_lim: break
-            if i + node_index >= len(self.weights): break
-            neighbours.append((node_index+i, distance_factor))
-            neighbours.append((node_index-i, distance_factor))
+            neighbours.append(((node_index+i)% len(self.weights), distance_factor))
+            neighbours.append(((node_index-i)% len(self.weights), distance_factor))
             i += 1
         return neighbours
 

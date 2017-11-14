@@ -1,27 +1,26 @@
-import mnist as m
+import main as m
 from casemanager import CaseManager
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("mnist")
+cm = CaseManager("1")
 
 
 param = {"lr": 0.5,
-            "input_size": 784,
-            "output_size": 196,
+            "input_size": 52,
+            "output_size": 100,
             "decay_func": "exp",
             "caseman": cm,
             "decay_half_life": 1000,
             "n_factor": 5,
             "n_halftime": 500,
-            "graph_int": 10,
+            "graph_int": 100000,
             "video": False,
             "output_dir": None,
-            "nodes_per_row": 14
 }
 
 som = m.SOM(**param)
-som.run(100)
+som.run(4000)
 
 
 

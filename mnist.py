@@ -214,9 +214,9 @@ class SOM:
             correct += wins.count(most_common)
         return node_classes, correct/len(features)
 
-    def test_accuracy(self):
+    def test_train_accuracy(self):
         correct = 0
-        node_classes,_ = self.node_classes()
+        node_classes,training_accuracy = self.node_classes()
         features, labels = self.cman.get_all_test_cases()
         for i in range(len(features)):
             f,l = features[i],labels[i]
@@ -225,11 +225,12 @@ class SOM:
             winner = summarized.argmin()
             if np.argmax(l) == node_classes[winner]:
                 correct += 1
-        return correct/len(features)
+        return correct/len(features),training_accuracy
 
 
     # Executes a training session with <iteration> cases
     def run(self, iterations):
+        print("Hello, i've started")
         for i in range(iterations):
             # Run one training iteration
             feature,label = self.cman.next()
@@ -248,16 +249,19 @@ class SOM:
                     matrix = np.reshape(node_class, (-1, self.nodes_per_row))
                     self.graph_maker.save_2d_plot(matrix)
             # Print step number and accuracy
-            if i%1000000 == 0:
+            if i%100000 == 0:
                 print("Currently on step: " + str(i))
                 print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
             if i>1000 and i%10 == 0:
-                test_accuracy = self.test_accuracy()
-                print('Test accuracy: '+str(test_accuracy))
-                if test_accuracy > 0.75 and win_rate > 0.85:
+                test_accuracy,train_accuracy = self.test_train_accuracy()
+                print("step: " + str(i)+"   test  accuracy: "+ str(test_accuracy))
+                print("step: " + str(i)+"   train accuracy: "+ str(train_accuracy))
+
+                if test_accuracy > 0.75 and train_accuracy > 0.85:
                     print("Accuracy levels reached, finishing execution")
                     print('\n')
+                    break
 
 
 
