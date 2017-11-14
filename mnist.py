@@ -216,14 +216,14 @@ class SOM:
 
     def test_accuracy(self):
         correct = 0
-        node_classes = self.node_classes()
+        node_classes,_ = self.node_classes()
         features, labels = self.cman.get_all_test_cases()
         for i in range(len(features)):
             f,l = features[i],labels[i]
             results = np.square(self.weights - f)
             summarized = results.sum(1)
             winner = summarized.argmin()
-            if l == node_classes(winner):
+            if np.argmax(l) == node_classes[winner]:
                 correct += 1
         return correct/len(features)
 
@@ -250,7 +250,7 @@ class SOM:
             # Print step number and accuracy
             if i%10 == 0:
                 print("Currently on step: " + str(i))
-                print("win rate: "+ str(win_rate))
+                print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
             if i%100 == 0:
                 print('Test accuracy: '+str(self.test_accuracy()))

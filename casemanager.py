@@ -5,10 +5,9 @@ class MNIST_holder:
 
     def __init__(self, train_cases=100,test_cases=100):
         from tensorflow.examples.tutorials.mnist import input_data
-        self.train_cases = train_cases
         self.mnist = input_data.read_data_sets("datasets/MNIST/", one_hot=True)
-        self.train_features, self.train_labels = self.mnist.train.next_batch(self.train_cases)
-        self.test_features, self.test_labels = self.mnist.test.next_batch(self.test_cases)
+        self.train_features, self.train_labels = self.mnist.train.next_batch(train_cases)
+        self.test_features, self.test_labels = self.mnist.test.next_batch(test_cases)
 
     def train_full_batch(self):
         return self.train_features, self.train_labels
