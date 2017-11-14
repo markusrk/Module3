@@ -3,7 +3,7 @@ from casemanager import CaseManager
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("8")
+cm = CaseManager("1")
 
 
 param = {"lr": 0.5,
@@ -20,7 +20,7 @@ param = {"lr": 0.5,
 }
 
 som = m.SOM(**param)
-som.run(4000)
+print(som.run(4000))
 
 
 

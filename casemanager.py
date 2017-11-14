@@ -18,6 +18,10 @@ class MNIST_holder:
 
 class CaseManager:
     def __init__(self, dataset):
+        self.rand = None
+        self.i = 0
+        with open('randnums.txt','r') as f:
+            self.rand = list(eval(f.readline()))
         if dataset == "mnist":
             cases = 1000
             self.mnist = True
@@ -52,6 +56,11 @@ class CaseManager:
         if self.mnist:
             return self.train_features[r], self.train_labels[r]
         return self.train_features[r]
+
+    def next_p(self):
+        r = self.rand[self.i]
+        self.i+=1
+        return self.train_features[r%len(self.train_features)]
 
     def get_all_cases(self):
         if self.mnist:
