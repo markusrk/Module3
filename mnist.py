@@ -53,7 +53,7 @@ class GraphMaker:
         return
 
     def save_2d_plot(self,matrix):
-        plt.matshow(matrix,cmap='tab20')
+        plt.matshow(matrix,cmap='Accent')
         plt.colorbar()
         plt.savefig(self.output_dir + "/plot" + str(self.plot_no))
         plt.close()
@@ -66,11 +66,11 @@ class SOM:
     # Sets a directory to use for outputting files
     def get_output_dir(self,output_dir=None):
         if output_dir:
-            os.makedirs("output/" + output_dir, exist_ok=False)
+            os.makedirs("output/" + output_dir)
             return  "output/"+output_dir
         else:
             dirno = len(os.listdir("output/"))
-            os.makedirs("output/"+str(dirno),exist_ok=False)
+            os.makedirs("output/"+str(dirno))
         return "output/"+str(dirno)
 
 
@@ -253,7 +253,11 @@ class SOM:
                 print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
             if i%100 == 0:
-                print('Test accuracy: '+str(self.test_accuracy()))
+                test_accuracy = self.test_accuracy()
+                print('Test accuracy: '+str(test_accuracy))
+                if test_accuracy > 0.75 and win_rate > 0.85:
+                    print("Accuracy levels reached, finishing execution")
+                    print('\n')
 
 
 
