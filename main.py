@@ -37,10 +37,11 @@ class GraphMaker:
         plt.show()
         return
 
-    def save_plot(self,cities_x,cities_y,som_x,som_y):
+    def save_plot(self,cities_x,cities_y,som_x,som_y,nfactor="",lrate=""):
         plt.scatter(cities_x,cities_y,color="BLUE")
         plt.scatter(som_x,som_y,color="RED")
         plt.plot(som_x,som_y,color="GREEN")
+        plt.title("Nfactor:  "+str(nfactor)+"  lrate: "+str(lrate))
         plt.savefig(self.output_dir+"/plot"+str(self.plot_no))
         plt.close()
         self.plot_no += 1
@@ -54,8 +55,9 @@ class SOM:
     # Sets a directory to use for outputting files
     def get_output_dir(self,output_dir=None):
         if output_dir:
-            os.makedirs("output/" + output_dir, exist_ok=False)
-            return  "output/"+output_dir
+            dirno = len(os.listdir("output/"))
+            os.makedirs("output/" + output_dir+str(dirno), exist_ok=False)
+            return  "output/"+output_dir+str(dirno)
         else:
             dirno = len(os.listdir("output/"))
             os.makedirs("output/"+str(dirno),exist_ok=False)
@@ -69,6 +71,18 @@ class SOM:
         weights = np.random.random_sample((self.output_size,self.input_size))
         weights[:,0] = weights[:,0]*(x_max-x_min)+x_min
         weights[:, 1] = weights[:, 1] * (y_max - y_min) + y_min
+        return weights
+    
+    def rand_init(self):
+        weights = np.random.random_sample((self.output_size,self.input_size))
+        x_min,x_max,y_min,y_max = self.cman.minmax()
+        x_cen = x_min + 0.5*(x_max-x_min)
+        y_cen = y_min + 0.5 * (y_max - y_min)
+        x_s = (x_max-x_min)
+        y_s = (y_max - y_min)
+        weights = weights-0.5
+        weights[:,0] = weights[:,0]*x_s+x_cen
+        weights[:,1] = weights[:,1] * y_s + y_cen
         return weights
 
     def circle_init(self):
@@ -169,7 +183,8 @@ class SOM:
                  graph_int,
                  video = False,
                  output_dir = None,
-                 save = True
+                 save = True,
+                print_interval = 100
 
                  ):
         self.lr = lr
@@ -184,6 +199,7 @@ class SOM:
         self.graph_int = graph_int # Defines how often graphs are to be saved
         self.n_halftime = n_halftime
         self.video = video
+        self.print_interval = print_interval
 
         self.weights = self.circle_init()
         self.updated_lr = self.lr
@@ -232,15 +248,15 @@ class SOM:
 
             # Generate charts
             if i%self.graph_int == 0:
-                self.graph_maker.save_plot(self.cman.x,self.cman.y,self.weights[:,0],self.weights[:,1])
+                self.graph_maker.save_plot(self.cman.x,self.cman.y,self.weights[:,0],self.weights[:,1],self.updated_n_factor,self.updated_lr)
 
-            if i%100 == 0:
+            if i%self.print_interval == 0 and i!=0:
                 print("Currently on step: " + str(i))
 
 
         # Finishing comments
         pl,used_nodes = self.path_length(return_nodes=True)
-        print("Path length= " + str(pl))
+        #print("Path length= " + str(pl))
         self.graph_maker.save_plot(self.cman.x, self.cman.y, used_nodes[:, 0], used_nodes[:, 1])
 
         # Makes a video of all the image files

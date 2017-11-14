@@ -3,18 +3,18 @@ from casemanager import CaseManager
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("1")
+cm = CaseManager("8")
 
 
 param = {"lr": 0.5,
-            "input_size": 52,
+            "input_size": 2,
             "output_size": 100,
             "decay_func": "exp",
             "caseman": cm,
             "decay_half_life": 1000,
-            "n_factor": 5,
-            "n_halftime": 500,
-            "graph_int": 100000,
+            "n_factor": 20,
+            "n_halftime": 200,
+            "graph_int": 1000,
             "video": False,
             "output_dir": None,
 }
@@ -41,8 +41,8 @@ def test_all(iterations_per_problem,out_dir=None):
                  "decay_func": "exp",
                  "caseman": cm,
                  "decay_half_life": 1000,
-                 "n_factor": 5,
-                 "n_halftime": 500,
+                 "n_factor": 40,
+                 "n_halftime": 1000,
                  "graph_int": 10,
                  "video": True,
                  "output_dir": out_dir
