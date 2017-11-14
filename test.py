@@ -3,7 +3,7 @@ from casemanager import CaseManager
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("1")
+cm = CaseManager("8")
 
 
 param = {"lr": 0.5,
