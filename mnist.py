@@ -60,6 +60,11 @@ class GraphMaker:
         self.plot_no += 1
         return
 
+    def graph(self,l1,l2,s):
+        plt.plot(l1,s)
+        plt.plot(l2,s)
+        plt.show()
+
 # Main class that represents the self organising map
 class SOM:
 
@@ -230,11 +235,17 @@ class SOM:
 
     # Executes a training session with <iteration> cases
     def run(self, iterations):
+        self.test_accuracies = []
+        self.train_accuracies = []
+        self.l_rates = []
+        self.distances_for_1 = []
+        self.steps = []
         print("Hello, i've started")
         for i in range(iterations):
             # Run one training iteration
-            feature,label = self.cman.next()
+            feature,label = self.cman.next_p()
             winner = self.train(feature)
+
 
             # Updates learning rate and neighbourhood rates before next iteration
             self.updated_lr = self.lr*self.decay_half_life(i)
@@ -253,15 +264,25 @@ class SOM:
                 print("Currently on step: " + str(i))
                 print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
-            if i>1000 and i%10 == 0:
+            if i>500 and i%10 == 0:
                 test_accuracy,train_accuracy = self.test_train_accuracy()
                 print("step: " + str(i)+"   test  accuracy: "+ str(test_accuracy))
                 print("step: " + str(i)+"   train accuracy: "+ str(train_accuracy))
+
+                #append data for graphs
+                self.test_accuracies.append(test_accuracy)
+                self.train_accuracies.append(train_accuracy)
+                self.distances_for_1.append(np.exp((-1**2/(self.updated_n_factor**2))))
+                self.l_rates.append(self.updated_lr)
+                self.steps.append(i)
 
                 if test_accuracy > 0.75 and train_accuracy > 0.85:
                     print("Accuracy levels reached, finishing execution")
                     print('\n')
                     break
+
+        self.graph_maker.graph(self.test_accuracies,self.train_accuracies,self.steps)
+        self.graph_maker.graph(self.distances_for_1,self.l_rates,self.steps)
 
 
 

@@ -25,8 +25,9 @@ class CaseManager:
         if dataset == "mnist":
             cases = 1000
             self.mnist = True
-            self.train_features, self.train_labels = MNIST_holder(train_cases=cases).train_full_batch()
-            self.test_features, self.test_labels = MNIST_holder(train_cases=cases).test_full_batch()
+            self.mnist_holder = MNIST_holder(train_cases=cases)
+            self.train_features, self.train_labels = self.mnist_holder.train_full_batch()
+            self.test_features, self.test_labels = self.mnist_holder.test_full_batch()
             self.no_of_cities = cases
         else:
             self.mnist=False
@@ -60,6 +61,8 @@ class CaseManager:
     def next_p(self):
         r = self.rand[self.i]
         self.i+=1
+        if self.mnist:
+            return self.train_features[r%len(self.train_features)], self.train_labels[r%len(self.train_features)]
         return self.train_features[r%len(self.train_features)]
 
     def get_all_cases(self):
