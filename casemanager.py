@@ -20,7 +20,7 @@ class CaseManager:
     def __init__(self, dataset):
         self.rand = None
         self.i = 0
-        with open('randnums.txt','r') as f:
+        with open('randnums_mnist.txt','r') as f:
             self.rand = list(eval(f.readline()))
         if dataset == "mnist":
             cases = 1000

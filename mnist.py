@@ -61,8 +61,8 @@ class GraphMaker:
         return
 
     def graph(self,l1,l2,s):
-        plt.plot(l1,s)
-        plt.plot(l2,s)
+        plt.plot(s,l1)
+        plt.plot(s,l2)
         plt.show()
 
 # Main class that represents the self organising map
