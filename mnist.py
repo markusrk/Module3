@@ -48,12 +48,12 @@ class GraphMaker:
         return
 
     def show_2d_plot(self,matrix):
-        plt.matshow(matrix,cmap='Accent')
+        plt.matshow(matrix,cmap='tab20')
         plt.show()
         return
 
     def save_2d_plot(self,matrix):
-        plt.matshow(matrix,cmap='Accent')
+        plt.matshow(matrix,cmap='tab20')
         plt.colorbar()
         plt.savefig(self.output_dir + "/plot" + str(self.plot_no))
         plt.close()
@@ -243,7 +243,7 @@ class SOM:
         print("Hello, i've started")
         for i in range(iterations):
             # Run one training iteration
-            feature,label = self.cman.next_p()
+            feature,label = self.cman.next()
             winner = self.train(feature)
 
 
@@ -259,12 +259,8 @@ class SOM:
                     node_class,win_rate = self.node_classes()
                     matrix = np.reshape(node_class, (-1, self.nodes_per_row))
                     self.graph_maker.save_2d_plot(matrix)
-            # Print step number and accuracy
-            if i%100000 == 0:
-                print("Currently on step: " + str(i))
-                print("step: " + str(i)+"   win rate: "+ str(win_rate))
             # Print test set accuracy
-            if i>500 and i%10 == 0:
+            if i>499 and i%100 == 0:
                 test_accuracy,train_accuracy = self.test_train_accuracy()
                 print("step: " + str(i)+"   test  accuracy: "+ str(test_accuracy))
                 print("step: " + str(i)+"   train accuracy: "+ str(train_accuracy))
@@ -283,6 +279,7 @@ class SOM:
 
         self.graph_maker.graph(self.test_accuracies,self.train_accuracies,self.steps)
         self.graph_maker.graph(self.distances_for_1,self.l_rates,self.steps)
+
 
 
 

@@ -6,7 +6,7 @@ import pandas as pd
 cm = CaseManager("mnist")
 
 
-param = {"lr": 0.85,
+param = {"lr": 0.5,
             "input_size": 784,
             "output_size": 196,
             "decay_func": "exp",
@@ -14,14 +14,14 @@ param = {"lr": 0.85,
             "decay_half_life": 2000,
             "n_factor": 5,
             "n_halftime": 500,
-            "graph_int": 10000,
-            "video": False,
-            "output_dir": None,
+            "graph_int": 1000,
+            "video": True,
+            "output_dir": "trrre",
             "nodes_per_row" : 14
 }
 
 som = m.SOM(**param)
-print(som.run(2000))
+print(som.run(4000))
 
 
 
@@ -45,7 +45,7 @@ def test_all(iterations_per_problem,out_dir=None):
                  "n_factor": 10,
                  "n_halftime": 1000,
                  "graph_int": 10,
-                 "video": True,
+                 "video": False,
                  "output_dir": out_dir
                  }
         som = m.SOM(**param)

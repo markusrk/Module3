@@ -3,10 +3,10 @@ from casemanager import CaseManager
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
-cm = CaseManager("8")
+cm = CaseManager("T4")
 
 
-param = {"lr": 0.5,
+param = {"lr": 0.75,
             "input_size": 2,
             "output_size": 260,
             "decay_func": "exp",
@@ -16,7 +16,7 @@ param = {"lr": 0.5,
             "n_halftime": 500,
             "graph_int": 10000,
             "video": False,
-            "output_dir": None,
+            "output_dir": 'test',
             "print_interval" : 10000
 }
 

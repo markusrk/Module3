@@ -239,7 +239,7 @@ class SOM:
     def run(self, iterations):
         for i in range(iterations):
             # Run one training iteration
-            input = self.cman.next_p()
+            input = self.cman.next()
             self.train(input)
 
             # Updates learning rate and neighbourhood rates before next iteration
